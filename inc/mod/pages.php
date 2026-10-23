@@ -1204,7 +1204,7 @@ function mod_move($originBoard, $postID) {
 			}
 		}
 		
-		modLog("Moved thread #${postID} to " . sprintf($config['board_abbreviation'], $targetBoard) . " (#${newID})", $originBoard);
+		modLog("Moved thread #$postID to " . sprintf($config['board_abbreviation'], $targetBoard) . " (#$newID)", $originBoard);
 		
 		// build new thread
 		buildThread($newID);
