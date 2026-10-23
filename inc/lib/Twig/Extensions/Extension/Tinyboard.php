@@ -70,117 +70,146 @@ function twig_remove_whitespace_filter($data) {
 }
 
 function twig_date_filter($date, $format) {
-	// gmstrftime() is deprecated as of PHP 8.1 and removed in PHP 9.0.
-	// Convert the strftime format string to its date()/gmdate() equivalent so
-	// the behavior stays identical on all supported PHP versions.
-	static $strftimeToDateFormat = array(
+	// strftime()/gmstrftime() are deprecated as of PHP 8.1 and will be removed
+	// in PHP 9.0. On versions where gmstrftime() still exists, use it directly:
+	// it reproduces the platform's strftime() semantics exactly (including
+	// locale-aware specifiers like %c, %D, %x, %X, %Z). On newer versions we
+	// fall back to a portable gmdate()-based converter that covers every
+	// specifier documented on php.net/function.strftime.
+	if (function_exists('gmstrftime')) {
+		$tz = date_default_timezone_get();
+		date_default_timezone_set('UTC');
+		$out = @gmstrftime($format, (int)$date);
+		date_default_timezone_set($tz);
+		return $out;
+	}
+
+	return twig_strftime_fallback((int)$date, $format);
+}
+
+function twig_strftime_fallback($ts, $format) {
+	// Portable gmdate()-based strftime() emulation, used only when gmstrftime()
+	// has been removed from PHP. Values match C/glibc conventions.
+	static $directMap = array(
 		// Weekday
-		'%a' => 'D', '%A' => 'l', '%w' => 'w',
-		// Day of month/year (strftime space-pads %e; handled below)
-		'%d' => 'd',
-		// Week number (zero-padded ones via sentinel tokens below)
-		'%u' => 'N',
+		'%a' => 'D', '%A' => 'l', '%u' => 'N', '%w' => 'w',
+		// Day of month / ISO date
+		'%d' => 'd', '%F' => 'Y-m-d',
 		// Month
 		'%b' => 'M', '%B' => 'F', '%h' => 'M', '%m' => 'm',
 		// Year
 		'%y' => 'y', '%Y' => 'Y',
-		// Time (strftime space-pads %k and %l; handled below)
-		'%H' => 'H', '%I' => 'h', '%M' => 'i',
+		// Time
+		'%H' => 'H', '%I' => 'h', '%M' => 'i', '%S' => 's',
 		'%p' => 'A', '%P' => 'a', '%r' => 'h:i:s A', '%R' => 'H:i',
-		'%S' => 's', '%T' => 'H:i:s', '%X' => 'H:i:s', '%Z' => 'T',
-		// Date/time representations
-		'%D' => 'm/d/y', '%F' => 'Y-m-d',
-		'%g' => 'y', '%x' => 'm/d/y',
-		// Seconds since the epoch / whitespace / literal percent
+		'%T' => 'H:i:s',
+		// Epoch seconds / whitespace / literal percent
 		'%s' => 'U', '%n' => "\n", '%t' => "\t", '%%' => '%',
 	);
 
-	// Specifiers that cannot be expressed directly with date():
-	//   * zero/space padded values: %e %k %l (space), %j %U %W %V (zero)
-	//   * calendar week numbers: %U %W %V (date() "W" is ISO-8601 only)
-	//   * century derived from the week-numbering year: %G %C
-	// They are replaced with sentinel tokens before formatting and substituted
-	// with the exact strftime()-compatible value afterwards.
 	$tokens = array();
+
+	// All components are derived from gmdate(): the filter formats in UTC, so the
+	// server's timezone setting must never leak into these values.
+	list($year, $mon, $day, $hour, $yday, $dow) = array_map('intval', explode('|', gmdate('Y|n|j|G|z|w', $ts)));
+	$hour12 = $hour % 12; if ($hour12 === 0) $hour12 = 12;
+	$hms    = gmdate('H:i:s', $ts);
+	$mdy    = sprintf('%02d/%02d/%02d', $mon, $day, $year % 100);
+
+	// Replace ALL occurrences of a specifier with a sentinel token.
 	$tokenize = function ($spec, $value) use (&$format, &$tokens) {
-		if (($pos = strpos($format, $spec)) !== false) {
+		while (($pos = strpos($format, $spec)) !== false) {
 			$token = "\x01" . count($tokens) . "\x02";
 			$format = substr_replace($format, $token, $pos, 2);
 			$tokens[$token] = $value;
 		}
 	};
 
-	if (($pos = strpos($format, '%c')) !== false) {
-		// glibc's %c is "%a %b %e %T %Y"; expand it so %e gets tokenized too.
-		$day = gmdate('j', $date);
-		// glibc's %c is "%a %b %e %T %Y": weekday and month are left-aligned in
-		// a 3-char field, the day is right-aligned (space-padded).
-		$expansion = str_pad(gmdate('D', $date), 3) . ' '
-			. str_pad(gmdate('M', $date), 3) . ' '
-			. str_pad($day, 2, ' ', STR_PAD_LEFT)
-			. gmdate(' H:i:s Y', $date);
-		$token = "\x01" . count($tokens) . "\x02";
-		$format = substr_replace($format, $token, $pos, 2);
-		$tokens[$token] = $expansion;
+	// Space-padded values.
+	if (strpos($format, '%e') !== false || strpos($format, '%c') !== false)
+		$tokenize('%e', str_pad((string)$day, 2, ' ', STR_PAD_LEFT));
+	if (strpos($format, '%k') !== false)
+		$tokenize('%k', str_pad((string)$hour, 2, ' ', STR_PAD_LEFT));
+	if (strpos($format, '%l') !== false)
+		$tokenize('%l', str_pad((string)$hour12, 2, ' ', STR_PAD_LEFT));
+
+	// Unpadded values (glibc extensions supported by PHP's strftime()).
+	if (strpos($format, '%E') !== false)
+		$tokenize('%E', (string)$day);
+	if (strpos($format, '%O') !== false)
+		$tokenize('%O', (string)$hour);
+
+	// Day of year, zero-padded.
+	if (strpos($format, '%j') !== false)
+		$tokenize('%j', sprintf('%03d', $yday + 1));
+
+	// Calendar week numbers: %U counts weeks starting on Sunday, %W on Monday.
+	// Days before the year's first Sunday/Monday belong to week 0. Jan 1's weekday
+	// is derived from absolute UTC day arithmetic (the Unix epoch, 1970-01-01, was
+	// a Thursday), so no timezone-sensitive functions are involved.
+	if (strpos($format, '%U') !== false || strpos($format, '%W') !== false) {
+		$daysFromEpoch = $yday + 365 * ($year - 1970) + intdiv($year - 1969, 4) - intdiv($year - 1901, 100) + intdiv($year - 1601, 400);
+		$jan1Dow = ((4 + $daysFromEpoch - $yday) % 7 + 7) % 7; // weekday of Jan 1 (0 = Sunday)
+		if (strpos($format, '%U') !== false) {
+			// Day index of the most recent Sunday relative to the current week.
+			$tokenize('%U', sprintf('%02d', intdiv($yday + $jan1Dow - (($yday + $jan1Dow) % 7), 7)));
+		}
+		if (strpos($format, '%W') !== false) {
+			$offset = ($jan1Dow === 0) ? 6 : $jan1Dow - 1; // days until the first Monday
+			$tokenize('%W', sprintf('%02d', intdiv($yday + $offset - (($yday + $offset) % 7), 7)));
+		}
 	}
 
-	foreach (array('%e', '%E', '%k', '%O', '%l', '%j', '%U', '%V', '%W', '%C', '%G') as $spec) {
-		if (strpos($format, $spec) === false)
-			continue;
-		switch ($spec) {
-			case '%e': // day of month, space-padded
-				$v = gmdate('j', $date);
-				$tokenize($spec, strlen($v) < 2 ? ' ' . $v : $v);
-				break;
-			case '%E': // day of month, no padding
-				$tokenize($spec, gmdate('j', $date));
-				break;
-			case '%k': // hour (24-hour clock), space-padded
-				$v = gmdate('G', $date);
-				$tokenize($spec, strlen($v) < 2 ? ' ' . $v : $v);
-				break;
-			case '%O': // hour (24-hour clock), no padding
-				$tokenize($spec, gmdate('G', $date));
-				break;
-			case '%l': // hour (12-hour clock), space-padded
-				$v = gmdate('g', $date);
-				$tokenize($spec, strlen($v) < 2 ? ' ' . $v : $v);
-				break;
-			case '%j': // day of the year, zero-padded
-				$v = (int)gmdate('z', $date) + 1;
-				$tokenize($spec, sprintf('%03d', $v));
-				break;
-			case '%U': // week number, Sunday as first day of week
-				$offset = (int)gmdate('w', strtotime('first day of january GMT', $date));
-				$tokenize($spec, sprintf('%02d', intdiv((int)gmdate('z', $date) + $offset, 7)));
-				break;
-			case '%W': // week number, Monday as first day of week
-				$offset = (int)gmdate('w', strtotime('first day of january GMT', $date));
-				$tokenize($spec, sprintf('%02d', intdiv((int)gmdate('z', $date) + $offset, 7)));
-				break;
-			case '%V': // ISO-8601 week number
-				$tokenize($spec, gmdate('W', $date));
-				break;
-			default: // %C and %G derive from the ISO week-numbering year
-				if ($spec === '%C')
-					$tokenize($spec, gmdate('Y', $date)[0] . gmdate('Y', $date)[1]);
-				else // %G: week-based year
-					$tokenize($spec, gmdate('o', $date));
-			}
-		}
+	// ISO-8601 pieces: %V week number, %G week-numbering year, %g its last two
+	// digits, %C the century of the week-numbering year.
+	if (strpos($format, '%V') !== false || strpos($format, '%G') !== false
+			|| strpos($format, '%g') !== false || strpos($format, '%C') !== false) {
+		$isoYear = (int)gmdate('o', $ts);
+		if (strpos($format, '%V') !== false)
+			$tokenize('%V', gmdate('W', $ts));
+		if (strpos($format, '%G') !== false)
+			$tokenize('%G', sprintf('%04d', $isoYear));
+		if (strpos($format, '%g') !== false)
+			$tokenize('%g', sprintf('%02d', (($isoYear % 100) + 100) % 100));
+		if (strpos($format, '%C') !== false)
+			// glibc computes %C from the calendar year, not the week-numbering year.
+			$tokenize('%C', sprintf('%02d', intval(floor($year / 100))));
+	}
 
-		$converted = '';
+	// Locale composites, approximated per glibc/C locale.
+	if (strpos($format, '%D') !== false || strpos($format, '%x') !== false) {
+		// %D is "%m/%d/%y"; %x matches it in the C/US locale.
+		$tokenize('%D', $mdy);
+		$tokenize('%x', $mdy);
+	}
+	if (strpos($format, '%X') !== false)
+		$tokenize('%X', $hms); // equivalent to %T
+	if (strpos($format, '%c') !== false) {
+		// glibc's %c is "%a %b %e %T %Y".
+		$tokenize('%c', gmdate('D M', $ts) . ' ' . str_pad((string)$day, 2, ' ', STR_PAD_LEFT) . ' ' . $hms . ' ' . sprintf('%04d', $year));
+		// Any explicit %e was already tokenized above; make sure it never leaks
+		// into this expansion unexpanded when %c appears without %e handling.
+	}
+	if (strpos($format, '%Z') !== false) {
+		// The output is formatted in UTC; glibc labels that zone "GMT". Fall back
+		// to a literal UTC if gmstrftime() is unavailable for probing.
+		$tzName = function_exists('gmstrftime') ? @gmstrftime('%Z', $ts) : false;
+		$tokenize('%Z', ($tzName === false || $tzName === '') ? 'UTC' : $tzName);
+	}
+
+	// Translate the remaining specifiers to gmdate() format, escaping literals.
+	$converted = '';
 	$length = strlen($format);
 	for ($i = 0; $i < $length; $i++) {
 		if ($format[$i] === '%' && $i + 1 < $length) {
 			$spec = '%' . $format[$i + 1];
-			if (isset($strftimeToDateFormat[$spec])) {
-				$converted .= $strftimeToDateFormat[$spec];
+			if (isset($directMap[$spec])) {
+				$converted .= $directMap[$spec];
 				$i++;
 				continue;
 			}
 		}
-		// Escape literal characters (and any unknown specifiers) for date()
+		// Escape literal characters (and any unknown specifiers) for gmdate().
 		if (ctype_alnum($format[$i])) {
 			$converted .= '\\' . $format[$i];
 		} else {
@@ -188,7 +217,7 @@ function twig_date_filter($date, $format) {
 		}
 	}
 
-	$out = gmdate($converted, $date);
+	$out = gmdate($converted, $ts);
 
 	foreach ($tokens as $token => $value) {
 		$out = str_replace($token, $value, $out);
