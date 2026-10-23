@@ -976,7 +976,7 @@ class FirePHP {
       if(self::is_utf8($Object)) {
         return $Object;
       } else {
-        return utf8_encode($Object);
+        return iconv('ISO-8859-1', 'UTF-8', $Object); // utf8_encode() deprecated in PHP 8.2; iconv always available (mbstring may not be)
       }
     }
     return $return;
