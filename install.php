@@ -288,7 +288,7 @@ if ($step == 0) {
 	
 	$instance_config .= <<< 'ADDITIONAL_CONFIG'
 	$config['filename_func'] = function($post) {
-    	return sprintf("%s", time() . "-" . substr(md5(microtime()),rand(0,16),5));
+    	return time() . "-" . bin2hex(random_bytes(4));
     };
 
     $config['post_date'] = '%a %e %b %G %T';
