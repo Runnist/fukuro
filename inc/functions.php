@@ -194,8 +194,6 @@ function loadConfig() {
 	if ($config['syslog'])
 		openlog('tinyboard', LOG_ODELAY, LOG_SYSLOG); // open a connection to sysem logger
 
-	if ($config['recaptcha'])
-		require_once 'inc/lib/recaptcha/recaptchalib.php';
 	if ($config['recaptcha2'])
 		require_once 'inc/lib/recaptcha2/recaptchalib.php';
 	if ($config['cache']['enabled'])

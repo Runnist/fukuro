@@ -52,7 +52,7 @@ class ReCaptcha
      *
      * @param string $secret shared secret between site and ReCAPTCHA server.
      */
-    function ReCaptcha($secret)
+    function __construct($secret)
     {
         if ($secret == null || $secret == "") {
             die("To use reCAPTCHA you must get an API key from <a href='"
@@ -123,14 +123,14 @@ class ReCaptcha
                 'response' => $response
             )
         );
-        $answers = json_decode($getResponse, true);
+        $answers = json_decode((string)$getResponse, true);
         $recaptchaResponse = new ReCaptchaResponse();
 
-        if (trim($answers ['success']) == true) {
+        if (is_array($answers) && !empty($answers['success'])) {
             $recaptchaResponse->success = true;
         } else {
             $recaptchaResponse->success = false;
-            $recaptchaResponse->errorCodes = $answers [error-codes];
+            $recaptchaResponse->errorCodes = isset($answers['error-codes']) ? $answers['error-codes'] : 'invalid-response';
         }
 
         return $recaptchaResponse;

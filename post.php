@@ -209,23 +209,9 @@ if (isset($_POST['delete'])) {
 	}
 
 	// Check for CAPTCHA right after opening the board so the "return" link is in there
-	if ($config['recaptcha']) {
-		if (!isset($_POST['recaptcha_challenge_field']) || !isset($_POST['recaptcha_response_field']))
-			error($config['error']['bot']);
-		// Check what reCAPTCHA has to say...
-		$resp = recaptcha_check_answer($config['recaptcha_private'],
-			$_SERVER['REMOTE_ADDR'],
-			$_POST['recaptcha_challenge_field'],
-			$_POST['recaptcha_response_field']);
-		if (!$resp->is_valid) {
-			error($config['error']['captcha']);
-		}
-	}
-
-	// Check for CAPTCHA right after opening the board so the "return" link is in there
 	if ($config['recaptcha2']) {
-		if (!isset($_POST['g-recaptcha-response']))
-			error($config['error']['bot']);
+		if (!isset($_POST['g-recaptcha-response']) || $_POST['g-recaptcha-response'] === '')
+			error($config['error']['captcha']);
 		// Check what reCAPTCHA has to say...
 		$reCaptcha = new ReCaptcha($config['recaptcha_private']);
 		$resp = $reCaptcha->verifyResponse(

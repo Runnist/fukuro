@@ -39,7 +39,8 @@
 	$config['blotter'] = &$config['global_message'];
 
 	// Automatically check if a newer version of Tinyboard is available when an administrator logs in.
-	$config['check_updates'] = true;
+	// Устарело: проверка обновлений (tinyboard.org/version.txt) удалена из inc/mod/pages.php.
+	$config['check_updates'] = false;
 	// How often to check for updates
 	$config['check_updates_time'] = 43200; // 12 hours
 
@@ -272,8 +273,6 @@
 		'raw',
 		'embed',
 		'captcha',
-		'recaptcha_challenge_field',
-		'recaptcha_response_field',
 		'spoiler',
 		'quick-reply',
 		'page',
@@ -285,15 +284,12 @@
 	// Simple captcha
 	$config['captcha'] = false;
 
-	// Enable old reCaptcha (API 1.0) to make spam even harder. Rarely necessary.
-	$config['recaptcha'] = false;
-
-	// Enable new reCaptcha (API 2.0) to make spam even harder. Rarely necessary.
+	// Enable reCAPTCHA v2 (API 2.0) to make spam even harder. Rarely necessary.
 	$config['recaptcha2'] = false;
 
 	// Public and private key pair from https://www.google.com/recaptcha/admin/create
-	$config['recaptcha_public'] = '6LcXTcUSAAAAAKBxyFWIt2SO8jwx4W7wcSMRoN3f';
-	$config['recaptcha_private'] = '6LcXTcUSAAAAAOGVbVdhmEM1_SyRF4xTKe8jbzf_';
+	$config['recaptcha_public'] = '';
+	$config['recaptcha_private'] = '';
 
 	/*
 	 * Custom filters detect certain posts and reject/ban accordingly. They are made up of a condition and an

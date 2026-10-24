@@ -384,8 +384,6 @@ if ($step == 0) {
         'raw',
         'embed',
         'captcha',
-        'recaptcha_challenge_field',
-        'recaptcha_response_field',
         'g-recaptcha-response',
         'spoiler',
         'quick-reply',
