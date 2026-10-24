@@ -194,8 +194,6 @@ function loadConfig() {
 	if ($config['syslog'])
 		openlog('tinyboard', LOG_ODELAY, LOG_SYSLOG); // open a connection to sysem logger
 
-	if ($config['recaptcha'])
-		require_once 'inc/lib/recaptcha/recaptchalib.php';
 	if ($config['recaptcha2'])
 		require_once 'inc/lib/recaptcha2/recaptchalib.php';
 	if ($config['cache']['enabled'])
@@ -1336,7 +1334,7 @@ function checkMute() {
 
 	if ($config['cache']['enabled']) {
 		// Cached mute?
-		if (($mute = cache::get("mute_${_SERVER['REMOTE_ADDR']}")) && ($mutetime = cache::get("mutetime_${_SERVER['REMOTE_ADDR']}"))) {
+		if (($mute = cache::get("mute_{$_SERVER["REMOTE_ADDR"]}")) && ($mutetime = cache::get("mutetime_{$_SERVER["REMOTE_ADDR"]}"))) {
 			error(sprintf($config['error']['youaremuted'], $mute['time'] + $mutetime - time()));
 		}
 	}
@@ -1355,8 +1353,8 @@ function checkMute() {
 
 		if ($mute['time'] + $mutetime > time()) {
 			if ($config['cache']['enabled']) {
-				cache::set("mute_${_SERVER['REMOTE_ADDR']}", $mute, $mute['time'] + $mutetime - time());
-				cache::set("mutetime_${_SERVER['REMOTE_ADDR']}", $mutetime, $mute['time'] + $mutetime - time());
+				cache::set("mute_{$_SERVER["REMOTE_ADDR"]}", $mute, $mute['time'] + $mutetime - time());
+				cache::set("mutetime_{$_SERVER["REMOTE_ADDR"]}", $mutetime, $mute['time'] + $mutetime - time());
 			}
 			// Not expired yet
 			error(sprintf($config['error']['youaremuted'], $mute['time'] + $mutetime - time()));

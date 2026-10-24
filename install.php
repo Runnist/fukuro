@@ -73,15 +73,8 @@ if ($step == 0) {
 		$can_exec = false;
 	elseif (in_array('shell_exec', array_map('trim', explode(', ', ini_get('disable_functions')))))
 		$can_exec = false;
-	elseif (ini_get('safe_mode'))
-		$can_exec = false;
 	elseif (trim(shell_exec('echo "TEST"')) !== 'TEST')
 		$can_exec = false;
-	
-	if (!defined('PHP_VERSION_ID')) {
-		$version = explode('.', PHP_VERSION);
-		define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
-	}
 	
 	// Required extensions
 	$extensions = array(
@@ -89,7 +82,7 @@ if ($step == 0) {
 			'installed' => extension_loaded('pdo'),
 			'required' => true
 		),
-		'PDO' => array(
+		'GD' => array(
 			'installed' => extension_loaded('gd'),
 			'required' => true
 		),
@@ -102,45 +95,45 @@ if ($step == 0) {
 	$tests = array(
 		array(
 			'category' => 'PHP',
-			'name' => 'PHP &ge; 5.2.5',
-			'result' => PHP_VERSION_ID >= 50205,
+			'name' => 'PHP &ge; 7.4',
+			'result' => PHP_VERSION_ID >= 70400,
 			'required' => true,
-			'message' => 'Fukuro requires PHP 5.2.5 or better.',
+			'message' => 'Fukuro requires PHP 7.4 or better (PHP 8.x recommended).',
 		),
 		array(
 			'category' => 'PHP',
-			'name' => 'PHP &ge; 5.3',
-			'result' => PHP_VERSION_ID >= 50300,
+			'name' => 'PHP &ge; 8.1',
+			'result' => PHP_VERSION_ID >= 80100,
 			'required' => false,
-			'message' => 'PHP &ge; 5.3, though not required, is recommended to make the most out of Fukuro configuration files.',
+			'message' => 'PHP &ge; 8.1 is recommended; older PHP versions receive no upstream security fixes.',
 		),
 		array(
 			'category' => 'PHP',
 			'name' => 'mbstring extension installed',
 			'result' => extension_loaded('mbstring'),
 			'required' => true,
-			'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/mbstring.installation.php">mbstring</a> extension.',
+			'message' => 'You must install the PHP <a href="https://www.php.net/manual/en/mbstring.installation.php">mbstring</a> extension.',
 		),
 		array(
 			'category' => 'Database',
 			'name' => 'PDO extension installed',
 			'result' => extension_loaded('pdo'),
 			'required' => true,
-			'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/intro.pdo.php">PDO</a> extension.',
+			'message' => 'You must install the PHP <a href="https://www.php.net/manual/en/intro.pdo.php">PDO</a> extension.',
 		),
 		array(
 			'category' => 'Database',
 			'name' => 'MySQL PDO driver installed',
 			'result' => extension_loaded('pdo') && in_array('mysql', PDO::getAvailableDrivers()),
 			'required' => true,
-			'message' => 'The required <a href="http://www.php.net/manual/en/ref.pdo-mysql.php">PDO MySQL driver</a> is not installed.',
+			'message' => 'The required <a href="https://www.php.net/manual/en/ref.pdo-mysql.php">PDO MySQL driver</a> is not installed.',
 		),
 		array(
 			'category' => 'Image processing',
 			'name' => 'GD extension installed',
 			'result' => extension_loaded('gd'),
 			'required' => true,
-			'message' => 'You must install the PHP <a href="http://www.php.net/manual/en/intro.image.php">GD</a> extension. GD is a requirement even if you have chosen another image processor for thumbnailing.',
+			'message' => 'You must install the PHP <a href="https://www.php.net/manual/en/intro.image.php">GD</a> extension. GD is a requirement even if you have chosen another image processor for thumbnailing.',
 		),
 		array(
 		 	'category' => 'Image processing',
@@ -168,7 +161,7 @@ if ($step == 0) {
 			'name' => 'Imagick extension installed',
 			'result' => extension_loaded('imagick'),
 			'required' => false,
-			'message' => '(Optional) The PHP <a href="http://www.php.net/manual/en/imagick.installation.php">Imagick</a> (ImageMagick) extension is not installed. You may not use Imagick for better (and faster) image processing.',
+			'message' => '(Optional) The PHP <a href="https://www.php.net/manual/en/imagick.installation.php">Imagick</a> (ImageMagick) extension is not installed. You may not use Imagick for better (and faster) image processing.',
 		),
 		array(
 			'category' => 'Image processing',
@@ -221,11 +214,11 @@ if ($step == 0) {
 		),
 		array(
 			'category' => 'Misc',
-			'name' => 'Caching available (APC, XCache, Memcached or Redis)',
-			'result' => extension_loaded('apc') || extension_loaded('xcache')
+			'name' => 'Caching available (APCu, Memcached or Redis)',
+			'result' => extension_loaded('apcu')
 				|| extension_loaded('memcached') || extension_loaded('redis'),
 			'required' => false,
-			'message' => 'You will not be able to enable the additional caching system, designed to minimize SQL queries and significantly improve performance. <a href="http://php.net/manual/en/book.apc.php">APC</a> is the recommended method of caching, but <a href="http://xcache.lighttpd.net/">XCache</a>, <a href="http://www.php.net/manual/en/intro.memcached.php">Memcached</a> and <a href="http://pecl.php.net/package/redis">Redis</a> are also supported.'
+			'message' => 'You will not be able to enable the additional caching system, designed to minimize SQL queries and significantly improve performance. <a href="https://www.php.net/manual/en/book.apcu.php">APCu</a> is the simplest method of caching; <a href="https://www.php.net/manual/en/intro.memcached.php">Memcached</a> and <a href="https://pecl.php.net/package/redis">Redis</a> are also supported.'
 		),
 		array(
 			'category' => 'Misc',
@@ -251,8 +244,8 @@ if ($step == 0) {
 	// Basic config
 	$page['title'] = 'Configuration';
 	
-	$config['cookies']['salt'] = substr(base64_encode(sha1(rand())), 0, 30);
-	$config['secure_trip_salt'] = substr(base64_encode(sha1(rand())), 0, 30);	
+	$config['cookies']['salt'] = base64_encode(random_bytes(24));
+	$config['secure_trip_salt'] = base64_encode(random_bytes(24));
 	
 	echo Element('page.html', array(
 		'body' => Element('installer/config.html', array(
@@ -279,15 +272,12 @@ if ($step == 0) {
 		foreach ($array as $name => $value) {
 			if (is_array($value)) {
 				$instance_config .= "\n";
-				create_config_from_array($instance_config, $value, $prefix . '[\'' . addslashes($name) . '\']');
+					create_config_from_array($instance_config, $value, $prefix . '[' . var_export((string)$name, true) . ']');
 				$instance_config .= "\n";
 			} else {
-				$instance_config .= '	$config' . $prefix . '[\'' . addslashes($name) . '\'] = ';
+					$instance_config .= '\t$config' . $prefix . '[' . var_export((string)$name, true) . '] = ';
 				
-				if (is_numeric($value))
-					$instance_config .= $value;
-				else
-					$instance_config .= "'" . addslashes($value) . "'";
+					$instance_config .= var_export($value, true);
 					
 				$instance_config .= ";\n";
 			}
@@ -298,7 +288,7 @@ if ($step == 0) {
 	
 	$instance_config .= <<< 'ADDITIONAL_CONFIG'
 	$config['filename_func'] = function($post) {
-    	return sprintf("%s", time() . "-" . substr(md5(microtime()),rand(0,16),5));
+    	return time() . "-" . bin2hex(random_bytes(4));
     };
 
     $config['post_date'] = '%a %e %b %G %T';
@@ -394,8 +384,6 @@ if ($step == 0) {
         'raw',
         'embed',
         'captcha',
-        'recaptcha_challenge_field',
-        'recaptcha_response_field',
         'g-recaptcha-response',
         'spoiler',
         'quick-reply',
@@ -457,7 +445,14 @@ ADDITIONAL_CONFIG;
 	
 	$sql = @file_get_contents('install.sql') or error("Couldn't load install.sql.");
 	
-	sql_open();
+	// Fail gracefully with a readable message instead of an uncaught PDOException.
+	try {
+		sql_open();
+	} catch (Exception $e) {
+		$page['title'] = 'Database connection failed';
+		$page['body'] = '<p style="text-align:center">Could not connect to the database server: <strong>' . htmlentities($e->getMessage()) . '</strong></p><p style="text-align:center">Check your MySQL credentials in <code>inc/instance-config.php</code> and try again.</p>';
+		die(Element('page.html', $page));
+	}
 	$mysql_version = mysql_version();
 	
 	// This code is probably horrible, but what I'm trying

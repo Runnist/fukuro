@@ -7,16 +7,6 @@
 require 'inc/functions.php';
 require 'inc/anti-bot.php';
 
-// Fix for magic quotes
-if (get_magic_quotes_gpc()) {
-	function strip_array($var) {
-		return is_array($var) ? array_map('strip_array', $var) : stripslashes($var);
-	}
-	
-	$_GET = strip_array($_GET);
-	$_POST = strip_array($_POST);
-}
-
 if (isset($_POST['delete'])) {
 	// Delete
 	
@@ -219,23 +209,9 @@ if (isset($_POST['delete'])) {
 	}
 
 	// Check for CAPTCHA right after opening the board so the "return" link is in there
-	if ($config['recaptcha']) {
-		if (!isset($_POST['recaptcha_challenge_field']) || !isset($_POST['recaptcha_response_field']))
-			error($config['error']['bot']);
-		// Check what reCAPTCHA has to say...
-		$resp = recaptcha_check_answer($config['recaptcha_private'],
-			$_SERVER['REMOTE_ADDR'],
-			$_POST['recaptcha_challenge_field'],
-			$_POST['recaptcha_response_field']);
-		if (!$resp->is_valid) {
-			error($config['error']['captcha']);
-		}
-	}
-
-	// Check for CAPTCHA right after opening the board so the "return" link is in there
 	if ($config['recaptcha2']) {
-		if (!isset($_POST['g-recaptcha-response']))
-			error($config['error']['bot']);
+		if (!isset($_POST['g-recaptcha-response']) || $_POST['g-recaptcha-response'] === '')
+			error($config['error']['captcha']);
 		// Check what reCAPTCHA has to say...
 		$reCaptcha = new ReCaptcha($config['recaptcha_private']);
 		$resp = $reCaptcha->verifyResponse(
@@ -351,7 +327,6 @@ if (isset($_POST['delete'])) {
 		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
 		curl_setopt($curl, CURLOPT_TIMEOUT, $config['upload_by_url_timeout']);
 		curl_setopt($curl, CURLOPT_USERAGENT, 'Tinyboard');
-		curl_setopt($curl, CURLOPT_BINARYTRANSFER, true);
 		curl_setopt($curl, CURLOPT_FILE, $fp);
 		curl_setopt($curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 		
@@ -600,7 +575,6 @@ if (isset($_POST['delete'])) {
 				curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
 				curl_setopt($curl, CURLOPT_TIMEOUT, $config['upload_by_url_timeout']);
 				curl_setopt($curl, CURLOPT_USERAGENT, 'Fukuro/5.0 Tinyboard/0.9.6.22');
-				curl_setopt($curl, CURLOPT_BINARYTRANSFER, true);
 				curl_setopt($curl, CURLOPT_FILE, $fp);
 				curl_setopt($curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
 
@@ -676,9 +650,9 @@ if (isset($_POST['delete'])) {
 	
 	if ($post['has_file']) {
 		if (strtolower($post['email']) == '#hide') {
-			$post['filename'] = "hidden." . pathinfo(urldecode(get_magic_quotes_gpc() ? stripslashes($_FILES['file']['name']) : $_FILES['file']['name']), PATHINFO_EXTENSION);
+			$post['filename'] = "hidden." . pathinfo(urldecode($_FILES['file']['name']), PATHINFO_EXTENSION);
 		} else {
-			$post['filename'] = urldecode(get_magic_quotes_gpc() ? stripslashes($_FILES['file']['name']) : $_FILES['file']['name']);
+			$post['filename'] = urldecode($_FILES['file']['name']);
 		}
 	}
 	
