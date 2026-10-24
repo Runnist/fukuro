@@ -144,22 +144,16 @@ function twig_strftime_fallback($ts, $format) {
 		$tokenize('%j', sprintf('%03d', $yday + 1));
 
 	// Calendar week numbers: %U counts weeks starting on Sunday, %W on Monday.
-	// Days before the year's first Sunday/Monday belong to week 0. Jan 1's weekday
-	// is derived from absolute UTC day arithmetic (the Unix epoch, 1970-01-01, was
-	// a Thursday), so no timezone-sensitive functions are involved.
-	if (strpos($format, '%U') !== false || strpos($format, '%W') !== false) {
-		$daysFromEpoch = $yday + 365 * ($year - 1970) + intdiv($year - 1969, 4) - intdiv($year - 1901, 100) + intdiv($year - 1601, 400);
-		$jan1Dow = ((4 + $daysFromEpoch - $yday) % 7 + 7) % 7; // weekday of Jan 1 (0 = Sunday)
-		if (strpos($format, '%U') !== false) {
-			// Days since the most recent Sunday; weeks = floor of that / 7.
-			$dow = (($daysFromEpoch + 4) % 7 + 7) % 7; // current weekday (0 = Sunday)
-			$tokenize('%U', sprintf('%02d', intdiv($yday - $dow, 7)));
-		}
-		if (strpos($format, '%W') !== false) {
-			// Days since the most recent Monday (Sunday counts as previous week's last day).
-			$dowMon = (($daysFromEpoch + 3) % 7 + 7) % 7; // current weekday (0 = Monday)
-			$tokenize('%W', sprintf('%02d', intdiv($yday - $dowMon, 7)));
-		}
+	// Days before the year's first Sunday/Monday belong to week 00. Matches the
+	// glibc strftime() formulas exactly: U = (yday + 7 - dow_sun) / 7 and
+	// W = (yday + 7 - dow_mon) / 7 with integer division ($dow is 0 = Sunday
+	// from gmdate('w'), purely calendar arithmetic, timezone-independent).
+	if (strpos($format, '%U') !== false) {
+		$tokenize('%U', sprintf('%02d', intdiv($yday + 7 - $dow, 7)));
+	}
+	if (strpos($format, '%W') !== false) {
+		$dowMon = ($dow + 6) % 7; // 0 = Monday
+		$tokenize('%W', sprintf('%02d', intdiv($yday + 7 - $dowMon, 7)));
 	}
 
 	// ISO-8601 pieces: %V week number, %G week-numbering year, %g its last two
