@@ -103,7 +103,9 @@ function twig_strftime_fallback($ts, $format) {
 		'%H' => 'H', '%I' => 'h', '%M' => 'i', '%S' => 's',
 		'%p' => 'A', '%P' => 'a', '%r' => 'h:i:s A', '%R' => 'H:i',
 		'%T' => 'H:i:s',
-		// Epoch seconds / whitespace / literal percent
+		// Timezone offset (the filter formats in UTC) /
+		// epoch seconds / whitespace / literal percent
+		'%z' => '+0000',
 		'%s' => 'U', '%n' => "\n", '%t' => "\t", '%%' => '%',
 	);
 
@@ -133,11 +135,9 @@ function twig_strftime_fallback($ts, $format) {
 	if (strpos($format, '%l') !== false)
 		$tokenize('%l', str_pad((string)$hour12, 2, ' ', STR_PAD_LEFT));
 
-	// Unpadded values (glibc extensions supported by PHP's strftime()).
-	if (strpos($format, '%E') !== false)
-		$tokenize('%E', (string)$day);
-	if (strpos($format, '%O') !== false)
-		$tokenize('%O', (string)$hour);
+	// %E and %O are glibc modifiers that only make sense combined with other
+	// specifiers (%_d, %0d, %Od...); gmstrftime() does not support them on their
+	// own and leaves them as literals, so we keep exactly the same behaviour.
 
 	// Day of year, zero-padded.
 	if (strpos($format, '%j') !== false)
