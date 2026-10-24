@@ -115,8 +115,7 @@
 	 */
 
 	$config['cache']['enabled'] = false;
-	// $config['cache']['enabled'] = 'xcache';
-	// $config['cache']['enabled'] = 'apc';
+	// $config['cache']['enabled'] = 'apcu';
 	// $config['cache']['enabled'] = 'memcached';
 	// $config['cache']['enabled'] = 'redis';
 
