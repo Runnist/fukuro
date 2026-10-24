@@ -151,12 +151,14 @@ function twig_strftime_fallback($ts, $format) {
 		$daysFromEpoch = $yday + 365 * ($year - 1970) + intdiv($year - 1969, 4) - intdiv($year - 1901, 100) + intdiv($year - 1601, 400);
 		$jan1Dow = ((4 + $daysFromEpoch - $yday) % 7 + 7) % 7; // weekday of Jan 1 (0 = Sunday)
 		if (strpos($format, '%U') !== false) {
-			// Day index of the most recent Sunday relative to the current week.
-			$tokenize('%U', sprintf('%02d', intdiv($yday + $jan1Dow - (($yday + $jan1Dow) % 7), 7)));
+			// Days since the most recent Sunday; weeks = floor of that / 7.
+			$dow = (($daysFromEpoch + 4) % 7 + 7) % 7; // current weekday (0 = Sunday)
+			$tokenize('%U', sprintf('%02d', intdiv($yday - $dow, 7)));
 		}
 		if (strpos($format, '%W') !== false) {
-			$offset = ($jan1Dow === 0) ? 6 : $jan1Dow - 1; // days until the first Monday
-			$tokenize('%W', sprintf('%02d', intdiv($yday + $offset - (($yday + $offset) % 7), 7)));
+			// Days since the most recent Monday (Sunday counts as previous week's last day).
+			$dowMon = (($daysFromEpoch + 3) % 7 + 7) % 7; // current weekday (0 = Monday)
+			$tokenize('%W', sprintf('%02d', intdiv($yday - $dowMon, 7)));
 		}
 	}
 
