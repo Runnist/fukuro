@@ -1614,7 +1614,7 @@ function mod_user($uid) {
 		
 		if ($_POST['password'] != '') {
 			$salt = generate_salt();
-			$password = hash('sha256', $salt . sha1($_POST['password']));
+			$password = mod_password_hash(sha1($_POST['password']));
 			
 			$query = prepare('UPDATE ``mods`` SET `password` = :password, `salt` = :salt WHERE `id` = :id');
 			$query->bindValue(':id', $uid);
@@ -1641,7 +1641,7 @@ function mod_user($uid) {
 	if (hasPermission($config['mod']['change_password']) && $uid == $mod['id'] && isset($_POST['password'])) {
 		if ($_POST['password'] != '') {
 			$salt = generate_salt();
-			$password = hash('sha256', $salt . sha1($_POST['password']));
+			$password = mod_password_hash(sha1($_POST['password']));
 
 			$query = prepare('UPDATE ``mods`` SET `password` = :password, `salt` = :salt WHERE `id` = :id');
 			$query->bindValue(':id', $uid);
@@ -1714,7 +1714,7 @@ function mod_user_new() {
 			error(sprintf($config['error']['invalidfield'], 'type'));
 		
 		$salt = generate_salt();
-		$password = hash('sha256', $salt . sha1($_POST['password']));
+		$password = mod_password_hash(sha1($_POST['password']));
 		
 		$query = prepare('INSERT INTO ``mods`` VALUES (NULL, :username, :password, :salt, :type, :boards)');
 		$query->bindValue(':username', $_POST['username']);

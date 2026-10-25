@@ -347,26 +347,11 @@ if (isset($_POST['delete'])) {
 
 	// Random image
 	if( ($config['derpibooru_random'] || $config['danbooru_random'] || $config['safebooru_random'] || $config['gelbooru_random'] || $config['giphy_random'])
-	    && (preg_match("/^#((pony|safe|derp|gel|gif|dan)rand|random)/i", strtolower($_POST['email'])))) {
+	    && (preg_match("/^#(pony|safe|derp|gel|gif|dan)rand/i", strtolower($_POST['email'])))) {
 		if (($post['op'] && !isset($post['no_longer_require_an_image_for_op']) && $config['force_image_op']) || (isset($_FILES['file']) && $_FILES['file']['tmp_name'] != '')) {
         	$_POST['email'] = '';
         } else {
 			switch ($_POST['email']) {
-                // Google random
-                case (preg_match('/^#random:\"(.+)\"$/', $_POST['email'], $googleTagFound) ? $_POST['email'] : !$_POST['email']):
-                    $provider = 'google';
-                    if ($config['google_random']) {
-                        // Tag is required.
-                        if ($googleTagFound == "")
-                            error ("Tag is required.");
-                        $googleTag = str_replace(" ", "%20", $googleTagFound[1]);
-                        // Google shows only first 64 images from search results
-                        // So there is no need to get total images count and make two requests, at least I hope so
-                        $googleJSON = json_decode(fetch_url('https://ajax.googleapis.com/ajax/services/search/images?v=1.0&rsz=1&q=' . $googleTag . '&start=' . mt_rand(0,63)));
-                        $post['file_url'] = $googleJSON->{"responseData"}->{"results"}[0]->{"unescapedUrl"};
-                    } else
-                        error('This feature is no longer supported.');
-                break;
 
 				// Derpibooru random
 				case (preg_match('/^#ponyrand(:\"(.+)\")?$/', $_POST['email'], $booruTagFound) ? $_POST['email'] : !$_POST['email']):

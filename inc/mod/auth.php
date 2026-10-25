@@ -32,6 +32,34 @@ function generate_salt() {
 return bin2hex(random_bytes(16));
 }
 
+// Hash a plaintext (already sha1()'d) password for storage. New hashes use bcrypt;
+// the legacy format was hash('sha256', $salt . $password).
+function mod_password_hash($hashed_input) {
+return password_hash($hashed_input, PASSWORD_BCRYPT);
+}
+
+// Verify a submitted (sha1'd) password against the stored hash, transparently
+// migrating legacy SHA-256-salted records to bcrypt on successful login.
+function mod_password_verify($user, $password) {
+if (strlen($user['password']) === 64 && ctype_xdigit($user['password'])) {
+// Legacy: hash('sha256', salt . sha1(password)) — constant-time compare, then upgrade.
+if (!hash_equals($user['password'], hash('sha256', $user['salt'] . $password))) {
+return false;
+}
+$salt = generate_salt();
+$newhash = mod_password_hash($password);
+$q = prepare('UPDATE ``mods`` SET `password` = :password, `salt` = :salt WHERE `id` = :id');
+$q->bindValue(':password', $newhash);
+$q->bindValue(':salt', $salt);
+$q->bindValue(':id', $user['id'], PDO::PARAM_INT);
+$q->execute() or error(db_error($q));
+$user['password'] = $newhash;
+$user['salt'] = $salt;
+return true;
+}
+return password_verify($password, $user['password']);
+}
+
 function login($username, $password, $makehash=true) {
 	global $mod;
 	
@@ -45,7 +73,7 @@ function login($username, $password, $makehash=true) {
 	$query->execute() or error(db_error($query));
 	
 	if ($user = $query->fetch(PDO::FETCH_ASSOC)) {
-		if (hash_equals($user['password'], hash('sha256', $user['salt'] . $password))) {
+		if (mod_password_verify($user, $password)) {
 			$cookie_salt = mkcookie_salt();
 			return $mod = array(
 				'id' => $user['id'],
@@ -68,18 +96,26 @@ function setCookies() {
 	setcookie(
 		$config['cookies']['mod'],
 		$mod['username'] . ':' . $mod['hash'][0] . ':' . $mod['hash'][1], // username:token:salt
-		time() + $config['cookies']['expire'],
-		$config['cookies']['jail'] ? $config['cookies']['path'] : '/',
-		null,
-		boolval($config['cookies']['secure'] ?? false),
-		$config['cookies']['httponly']
+		array(
+			'expires' => time() + $config['cookies']['expire'],
+			'path' => $config['cookies']['jail'] ? $config['cookies']['path'] : '/',
+			'secure' => boolval($config['cookies']['secure'] ?? false),
+			'httponly' => $config['cookies']['httponly'],
+			'samesite' => 'Lax'
+		)
 	);
 }
 
 function destroyCookies() {
 	global $config;
 	// Delete the cookies
-	setcookie($config['cookies']['mod'], 'deleted', time() - $config['cookies']['expire'], $config['cookies']['jail'] ? $config['cookies']['path'] : '/', null, boolval($config['cookies']['secure'] ?? false), true);
+	setcookie($config['cookies']['mod'], 'deleted', array(
+		'expires' => time() - $config['cookies']['expire'],
+		'path' => $config['cookies']['jail'] ? $config['cookies']['path'] : '/',
+		'secure' => boolval($config['cookies']['secure'] ?? false),
+		'httponly' => true,
+		'samesite' => 'Lax'
+	));
 }
 
 function modLog($action, $_board=null) {

@@ -146,6 +146,15 @@ function loadConfig() {
 
 	date_default_timezone_set($config['timezone']);
 
+	// Security: warn (without breaking the site) if the public placeholder secrets
+	// from inc/config.php were never replaced with random ones.
+	if (!defined('TINYBOARD_INSTALL') && PHP_SAPI !== 'cli') {
+		if (($config['cookies']['salt'] ?? '') === 'abcdefghijklmnopqrstuvwxyz09123456789!@#$%^&*()' ||
+			($config['secure_trip_salt'] ?? '') === ')(*&^%$#@!98765432190zyxwvutsrqponmlkjihgfedcba') {
+			_syslog(LOG_WARNING, 'Insecure default cookie/trip salts detected. Run install.php or set $config[\'cookies\'][\'salt\'] and $config[\'secure_trip_salt\'] in inc/instance-config.php.');
+		}
+	}
+
 	if (!isset($config['global_message']))
 		$config['global_message'] = false;
 

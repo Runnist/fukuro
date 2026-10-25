@@ -159,12 +159,16 @@
 	$config['cookies']['expire'] = 60 * 60 * 24 * 30 * 6; // ~6 months
 
 	// Make this something long and random for security.
+	// NOTE: the value below is a public placeholder. install.php replaces it with a
+	// random secret; if you configured the board manually, override it in
+	// inc/instance-config.php (a runtime warning reminds you until you do).
 	$config['cookies']['salt'] = 'abcdefghijklmnopqrstuvwxyz09123456789!@#$%^&*()';
 
 	// Whether or not you can access the mod cookie in JavaScript. Most users should not need to change this.
 	$config['cookies']['httponly'] = true;
 
 	// Used to salt secure tripcodes ("##trip") and poster IDs (if enabled).
+	// Also a public placeholder — override it in inc/instance-config.php.
 	$config['secure_trip_salt'] = ')(*&^%$#@!98765432190zyxwvutsrqponmlkjihgfedcba';
 
 /*
@@ -777,9 +781,8 @@
     // Amount of unique dices that can be rolled in a single post.
     $config['dice_limit'] = 5;
 
-    // #random in email field will attach a random pic from google.com.
-    // This API is now deprecated, alternative solution is heavily limited in requests.
-    $config['google_random'] = false;
+    // NOTE: the old "#random:\"tag\"" Google image feature was removed: it relied on
+    // the Google Custom Search API v1 (ajax.googleapis.com), discontinued in 2017.
 
     // #ponyrand in email field will attach a random pic from derpiboo.ru.
     $config['derpibooru_random'] = true;

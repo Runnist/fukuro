@@ -2,6 +2,7 @@
 
 // Installation/upgrade file	
 define('VERSION', 'v5.0.2-beta');
+define('TINYBOARD_INSTALL', true);
 
 require 'inc/functions.php';
 
@@ -529,15 +530,17 @@ ADDITIONAL_CONFIG;
 	$queries[] = "CREATE TABLE IF NOT EXISTS `mods` (
 	  `id` smallint(6) unsigned NOT NULL AUTO_INCREMENT,
 	  `username` varchar(30) NOT NULL,
-	  `password` char(64) CHARACTER SET ascii NOT NULL COMMENT 'SHA256',
+	  `password` varchar(255) CHARACTER SET ascii NOT NULL COMMENT 'bcrypt (legacy rows: sha256 hex)',
 	  `salt` char(32) CHARACTER SET ascii NOT NULL,
 	  `type` smallint(2) NOT NULL,
 	  `boards` text CHARACTER SET utf8 NOT NULL,
 	  PRIMARY KEY (`id`),
 	  UNIQUE KEY `id` (`id`,`username`)
 	) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;";
+	// Default admin password is "password"; bcrypt-hashed at install time.
+	// It must be changed immediately after the first login.
 	$queries[] = "INSERT INTO `mods` VALUES
-	(1, 'admin', 'cedad442efeef7112fed0f50b011b2b9bf83f6898082f995f69dd7865ca19fb7', '4a44c6c55df862ae901b413feecb0d49', 30, '*');";
+	(1, 'admin', '" . mod_password_hash(sha1('password')) . "', '4a44c6c55df862ae901b413feecb0d49', 30, '*');";
 	$queries[] = "CREATE TABLE IF NOT EXISTS `mutes` (
 	  `ip` varchar(39) NOT NULL,
 	  `time` int(11) NOT NULL,
