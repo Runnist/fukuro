@@ -30,6 +30,64 @@ register_shutdown_function('fatal_error_handler');
 mb_internal_encoding('UTF-8');
 loadConfig();
 
+/**
+ * Fetches an URL over HTTP(S) with sane timeouts and TLS verification.
+ * Replaces bare file_get_contents('http://...') calls, which could hang
+ * forever when `allow_url_fopen` has no default timeout configured.
+ *
+ * @param string $url        Absolute http(s) URL.
+ * @param int    $timeout    Total transfer timeout, seconds (0 = use config/default).
+ * @return string|false      Response body on success, false on any failure.
+ */
+function fetch_url($url, $timeout = 0) {
+	global $config;
+
+	if (!preg_match('@^https?://@i', $url))
+		return false;
+
+	if ($timeout <= 0)
+		$timeout = (isset($config['upload_by_url_timeout']) && $config['upload_by_url_timeout'] > 0) ? $config['upload_by_url_timeout'] : 15;
+
+	if (function_exists('curl_init')) {
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_URL, $url);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($curl, CURLOPT_FAILONERROR, true);
+		curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($curl, CURLOPT_MAXREDIRS, 3);
+		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+		curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
+		curl_setopt($curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+		curl_setopt($curl, CURLOPT_USERAGENT, 'Tinyboard');
+
+		$response = curl_exec($curl);
+		curl_close($curl);
+
+		if ($response === false)
+			return false;
+
+		return $response;
+	}
+
+	/* cURL not available — fall back to streams, but never without a timeout. */
+	$context = stream_context_create(array(
+		'http' => array(
+			'method'          => 'GET',
+			'timeout'         => $timeout,
+			'user_agent'      => 'Tinyboard',
+			'follow_location' => 1,
+			'max_redirects'   => 3,
+			'protocol_allowlist' => array('http', 'https'),
+			'verify_peer'     => true,
+			'verify_peer_name'=> true,
+		),
+	));
+
+	return @file_get_contents($url, false, $context);
+}
+
 function loadConfig() {
 	global $board, $config, $__ip, $debug, $__version, $microtime_start;
 
