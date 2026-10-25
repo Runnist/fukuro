@@ -95,17 +95,17 @@ if ($step == 0) {
 	$tests = array(
 		array(
 			'category' => 'PHP',
-			'name' => 'PHP &ge; 7.4',
-			'result' => PHP_VERSION_ID >= 70400,
+			'name' => 'PHP &ge; 8.5',
+			'result' => PHP_VERSION_ID >= 80500,
 			'required' => true,
-			'message' => 'Fukuro requires PHP 7.4 or better (PHP 8.x recommended).',
+			'message' => 'Fukuro requires PHP 8.5 or newer. You are running PHP ' . PHP_VERSION . '; please upgrade your server.',
 		),
 		array(
 			'category' => 'PHP',
-			'name' => 'PHP &ge; 8.1',
-			'result' => PHP_VERSION_ID >= 80100,
+			'name' => 'OPcache enabled',
+			'result' => function_exists('opcache_get_status') && filter_var(ini_get('opcache.enable'), FILTER_VALIDATE_BOOLEAN),
 			'required' => false,
-			'message' => 'PHP &ge; 8.1 is recommended; older PHP versions receive no upstream security fixes.',
+			'message' => 'You are running PHP ' . PHP_VERSION . ', but OPcache is disabled. Enable <a href="https://www.php.net/manual/en/book.opcache.php">OPcache</a> to significantly speed up execution.',
 		),
 		array(
 			'category' => 'PHP',

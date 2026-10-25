@@ -9,7 +9,7 @@ Fukuro (ранее Synch IE) основан на исходном коде Tinyb
 
 Минимальные системные требования
 ------------
-1.	PHP >= 7.4 (рекомендуется PHP 8.1+)
+1.	PHP >= 8.5 (жёсткое требование установщика; проверено на PHP 8.5.11)
 2.	Сервер MySQL >= 5.5.3 (или MariaDB)
 3.	[mbstring](https://www.php.net/manual/en/mbstring.installation.php)
 4.	[PHP GD](https://www.php.net/manual/en/intro.image.php)
