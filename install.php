@@ -95,17 +95,17 @@ if ($step == 0) {
 	$tests = array(
 		array(
 			'category' => 'PHP',
-			'name' => 'PHP &ge; 7.4',
-			'result' => PHP_VERSION_ID >= 70400,
+			'name' => 'PHP &ge; 8.1',
+			'result' => PHP_VERSION_ID >= 80100,
 			'required' => true,
-			'message' => 'Fukuro requires PHP 7.4 or better (PHP 8.x recommended).',
+			'message' => 'Fukuro requires PHP 8.1 or newer. You are running PHP ' . PHP_VERSION . '; please upgrade your server (PHP 8.5 recommended).',
 		),
 		array(
 			'category' => 'PHP',
-			'name' => 'PHP &ge; 8.1',
-			'result' => PHP_VERSION_ID >= 80100,
+			'name' => 'PHP &ge; 8.2',
+			'result' => PHP_VERSION_ID >= 80200,
 			'required' => false,
-			'message' => 'PHP &ge; 8.1 is recommended; older PHP versions receive no upstream security fixes.',
+			'message' => 'You are running PHP ' . PHP_VERSION . '. PHP 8.1 receives security fixes only until December 2025; PHP 8.2+ is recommended.',
 		),
 		array(
 			'category' => 'PHP',

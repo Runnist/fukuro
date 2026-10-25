@@ -95,15 +95,19 @@ function sql_open() {
 	}
 }
 
-// 5.6.10 becomes 50610
+// 5.6.10 becomes 50610, 8.0.34 becomes 80034, 11.4.2 becomes 110402 (MariaDB)
 function mysql_version() {
 	global $pdo;
 	
 	$version = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
-	$v = explode('.', $version);
-	if (count($v) != 3)
+	// Strip build suffixes such as "-log" or "MariaDB-1:11.4.2+..." tails.
+	$v = explode('.', preg_replace('/[^0-9.].*$/', '', $version));
+	if (count($v) < 2)
 		return false;
-	return (int) sprintf("%02d%02d%02d", $v[0], $v[1], $v[2]);
+	$major = (int)$v[0];
+	$minor = isset($v[1]) ? (int)$v[1] : 0;
+	$patch = isset($v[2]) ? (int)$v[2] : 0;
+	return (int) sprintf('%02d%02d%02d', $major, $minor, $patch);
 }
 
 function prepare($query) {
