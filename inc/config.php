@@ -796,9 +796,9 @@
 	// #gifrand in email field will attach a random gif from giphy.com
     $config['giphy_random'] = true;
 
-    // API key is necessary for $config['giphy_random'], this one is for testing only
-    // Register your own API key by contacting api@giphy.com
-    $config['giphyAPIKey'] = "dc6zaTOxFJmzC";
+    // API key is necessary for $config['giphy_random'].
+    // Get a free public (beta) key at https://developers.giphy.com/ and set it here.
+    $config['giphyAPIKey'] = "";
 
     // #letstry in email field will add some hardcoded random string.
     $config['letstry'] = true;

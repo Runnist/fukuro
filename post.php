@@ -529,6 +529,8 @@ if (isset($_POST['delete'])) {
 				case (preg_match('/^#gifrand(:\"(.+)\")?$/', $_POST['email'], $booruTagFound) ? $_POST['email'] : !$_POST['email']) :
 					$provider = 'giphy';
 					if ($config['giphy_random']) {
+						if (!$config['giphyAPIKey'])
+							error('Giphy API key is not configured. Set $config[\'giphyAPIKey\'] in inc/config.php (free key at https://developers.giphy.com/).');
 						if (count($booruTagFound) === 1) {
 							// No tags found
 						$booruRandJSON = json_decode(fetch_url('https://api.giphy.com/v1/gifs/random?api_key=' . urlencode($config['giphyAPIKey']) . '&rating=g'));

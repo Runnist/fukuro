@@ -292,7 +292,7 @@ function ready() {
 
 onready(init);
 
-{% endraw %}{% if config.google_analytics and config.google_analytics starts with 'G-' %}{% raw %}
+{% endraw %}{% if config.google_analytics and config.google_analytics|slice(0,2) == 'G-' %}{% raw %}
 
 (function(){/* Google Analytics 4 (gtag.js) — Universal Analytics закрыт 1 июля 2023 */
 var s=document.createElement('script');s.async=true;s.src='https://www.googletagmanager.com/gtag/js?id={% endraw %}{{ config.google_analytics|e('js') }}{% raw %}';
