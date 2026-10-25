@@ -449,12 +449,12 @@ if (isset($_POST['delete'])) {
 					if ($config['safebooru_random']) {
 						if (count($booruTagFound) === 1) {
 							// No tags found
-							$booruMaxXML = fetch_url('http://safebooru.org/index.php?page=dapi&s=post&q=index&limit=0');
+							$booruMaxXML = fetch_url('https://safebooru.org/index.php?page=dapi&s=post&q=index&limit=0');
 							$booruXML = xml_parser_create();
 							xml_parse_into_struct($booruXML, $booruMaxXML, $booruXMLDecoded);
 							xml_parser_free($booruXML);
 							$booruRand = mt_rand(0, $booruXMLDecoded[0]["attributes"]["COUNT"]-1);
-							$booruRandXML = fetch_url('http://safebooru.org/index.php?page=dapi&s=post&q=index&limit=1&pid=' . $booruRand);
+							$booruRandXML = fetch_url('https://safebooru.org/index.php?page=dapi&s=post&q=index&limit=1&pid=' . $booruRand);
 						} else {
 							// Tags are in $booruTagFound[2]
 							// Pretty sure there should be a function for this
@@ -462,14 +462,14 @@ if (isset($_POST['delete'])) {
 							$booruTag = str_replace("&", "%26", $booruTag);
 							$booruTag = str_replace("\(", "%28", $booruTag);
 							$booruTag = str_replace("\)", "%29", $booruTag);
-							$booruMaxXML = fetch_url('http://safebooru.org/index.php?page=dapi&s=post&q=index&limit=0&tags=' . $booruTag);
+							$booruMaxXML = fetch_url('https://safebooru.org/index.php?page=dapi&s=post&q=index&limit=0&tags=' . $booruTag);
 							$booruXML = xml_parser_create();
 							xml_parse_into_struct($booruXML, $booruMaxXML, $booruXMLDecoded);
 							xml_parser_free($booruXML);
 							if ($booruXMLDecoded[0]["attributes"]["COUNT"] === '0')
 								error($config['error']['invalidtag']);
 							$booruRand = mt_rand(0, $booruXMLDecoded[0]["attributes"]["COUNT"]-1);
-							$booruRandXML = fetch_url('http://safebooru.org/index.php?page=dapi&s=post&q=index&limit=1&tags=' . $booruTag . '&pid=' . $booruRand);
+							$booruRandXML = fetch_url('https://safebooru.org/index.php?page=dapi&s=post&q=index&limit=1&tags=' . $booruTag . '&pid=' . $booruRand);
 						}
 
 						$booruXML = xml_parser_create();
@@ -490,12 +490,12 @@ if (isset($_POST['delete'])) {
 					if ($config['gelbooru_random']) {
 						if (count($booruTagFound) === 1) {
 							// No tags found
-							$booruMaxXML = fetch_url('http://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=0');
+							$booruMaxXML = fetch_url('https://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=0');
 							$booruXML = xml_parser_create();
 							xml_parse_into_struct($booruXML, $booruMaxXML, $booruXMLDecoded);
 							xml_parser_free($booruXML);
 							$booruRand = mt_rand(0, $booruXMLDecoded[0]["attributes"]["COUNT"]-1);
-							$booruRandXML = fetch_url('http://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=1&pid=' . $booruRand);
+							$booruRandXML = fetch_url('https://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=1&pid=' . $booruRand);
 						} else {
 							// Tags are in $booruTagFound[2]
 							// Pretty sure there should be a function for this
@@ -503,14 +503,14 @@ if (isset($_POST['delete'])) {
 							$booruTag = str_replace("&", "%26", $booruTag);
 							$booruTag = str_replace("\(", "%28", $booruTag);
 							$booruTag = str_replace("\)", "%29", $booruTag);
-							$booruMaxXML = fetch_url('http://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=0&tags=' . $booruTag);
+							$booruMaxXML = fetch_url('https://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=0&tags=' . $booruTag);
 							$booruXML = xml_parser_create();
 							xml_parse_into_struct($booruXML, $booruMaxXML, $booruXMLDecoded);
 							xml_parser_free($booruXML);
 							if ($booruXMLDecoded[0]["attributes"]["COUNT"] === '0')
 								error($config['error']['invalidtag']);
 							$booruRand = mt_rand(0, $booruXMLDecoded[0]["attributes"]["COUNT"]-1);
-							$booruRandXML = fetch_url('http://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=1&tags=' . $booruTag . '&pid=' . $booruRand);
+							$booruRandXML = fetch_url('https://gelbooru.com/index.php?page=dapi&s=post&q=index&limit=1&tags=' . $booruTag . '&pid=' . $booruRand);
 						}
 
 						$booruXML = xml_parser_create();
@@ -531,19 +531,25 @@ if (isset($_POST['delete'])) {
 					if ($config['giphy_random']) {
 						if (count($booruTagFound) === 1) {
 							// No tags found
-							$booruRandJSON = json_decode(fetch_url('http://api.giphy.com/v1/gifs/random?api_key=' . $config['giphyAPIKey']));
-						} else {
-							// Tags are in $booruTagFound[2]
-							$booruTag = str_replace(" ", "+", $booruTagFound[2]);
-							$booruRandJSON = json_decode(fetch_url('http://api.giphy.com/v1/gifs/random?api_key=' . $config['giphyAPIKey'] . '&tag=' . $booruTag));
-						}
-						if (!isset($booruRandJSON->{'data'}->{'id'}))
-							error($config['error']['invalidtag']);
+						$booruRandJSON = json_decode(fetch_url('https://api.giphy.com/v1/gifs/random?api_key=' . urlencode($config['giphyAPIKey']) . '&rating=g'));
+					} else {
+						// Tags are in $booruTagFound[2]
+						$booruTag = str_replace(" ", "+", $booruTagFound[2]);
+						$booruRandJSON = json_decode(fetch_url('https://api.giphy.com/v1/gifs/random?api_key=' . urlencode($config['giphyAPIKey']) . '&tag=' . urlencode($booruTag) . '&rating=g'));
+					}
+					if (!isset($booruRandJSON->{'data'}->{'id'}))
+						error($config['error']['invalidtag']);
 
-						$post['file_url'] = ($booruRandJSON->{'data'}->{'image_url'});
+					// Giphy API returns the gif under images.original.url (v2) or image_url (legacy).
+					if (isset($booruRandJSON->{'data'}->{'images'}->{'original'}->{'url'}))
+						$post['file_url'] = $booruRandJSON->{'data'}->{'images'}->{'original'}->{'url'};
+					elseif (isset($booruRandJSON->{'data'}->{'image_url'}))
+						$post['file_url'] = $booruRandJSON->{'data'}->{'image_url'};
+					else
+						error($config['error']['invalidimg']);
 
-						if (!preg_match('@^https?://s3.amazonaws.com/giphymedia/media/@', $post['file_url']))
-							 error($config['error']['invalidimg']);
+					if (!preg_match('@^https?://(\w+\.|)giphy\.com/@', $post['file_url']))
+						error($config['error']['invalidimg']);
 					} else
 						error('This feature is disabled.');
 				break;
