@@ -539,8 +539,12 @@ ADDITIONAL_CONFIG;
 	) ENGINE=MyISAM  DEFAULT CHARSET=utf8mb4 AUTO_INCREMENT=1 ;";
 	// Default admin password is "password"; bcrypt-hashed at install time.
 	// It must be changed immediately after the first login.
+	// NOTE: inc/mod/auth.php cannot be required here (it guards with
+	// defined('TINYBOARD') and expects a fully loaded config), so the
+	// hashing logic is inlined; keep it in sync with mod_password_hash().
+	$admin_salt = bin2hex(random_bytes(16)); // char(32), fits `salt` column
 	$queries[] = "INSERT INTO `mods` VALUES
-	(1, 'admin', '" . mod_password_hash(sha1('password')) . "', '4a44c6c55df862ae901b413feecb0d49', 30, '*');";
+	(1, 'admin', '" . password_hash(sha1('password'), PASSWORD_BCRYPT) . "', '" . $admin_salt . "', 30, '*');";
 	$queries[] = "CREATE TABLE IF NOT EXISTS `mutes` (
 	  `ip` varchar(39) NOT NULL,
 	  `time` int(11) NOT NULL,
