@@ -30,6 +30,21 @@ class Twig_Extensions_Extension_Tinyboard extends Twig_Extension
 	}
 	
 	/**
+	* Returns a list of token parsers to add to the existing list.
+	*
+	* {% rw %}...{% endrw %} replaces the deprecated (Twig 1) / removed (Twig 3)
+	* {% filter remove_whitespace %} block tag.
+	*
+	* @return array An array of token parsers
+	*/
+	public function getTokenParsers()
+	{
+		return array(
+			new Twig_Extensions_TokenParser_Rw(),
+		);
+	}
+
+	/**
 	* Returns a list of functions to add to the existing list.
 	*
 	* @return array An array of filters

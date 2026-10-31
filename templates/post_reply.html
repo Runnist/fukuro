@@ -1,4 +1,4 @@
-{% filter remove_whitespace %}
+{% rw %}
 {# tabs and new lines will be ignored #}
 <div class="post reply row" id="reply_{{ post.id }}">
 
@@ -149,11 +149,11 @@
         {{ post.embed }}
     {% endif %}
 	<div class="body media-body">
-		{% endfilter %}{% if index %}{{ post.body|truncate_body(post.link) }}{% else %}{{ post.body }}{% endif %}{% filter remove_whitespace %}
+		{% endrw %}{% if index %}{{ post.body|truncate_body(post.link) }}{% else %}{{ post.body }}{% endif %}{% rw %}
 		{% if post.modifiers['ban message'] %}
 			{{ config.mod.ban_message|sprintf(post.modifiers['ban message']) }}
 		{% endif %}
 	</div>
 </div>
 <br/>
-{% endfilter %}
+{% endrw %}

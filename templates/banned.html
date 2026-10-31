@@ -1,4 +1,4 @@
-{% filter remove_whitespace %}
+{% rw %}
 {# Automatically removes unnecessary whitespace #}
 <div class="ban">
 	{% if ban.expires and time() >= ban.expires %}
@@ -133,4 +133,4 @@
 		{% endif %}
 	{% endif %}
 </div>
-{% endfilter %}
+{% endrw %}

@@ -16,6 +16,8 @@ function load_twig() {
 
 	Twig_Autoloader::autoload('Twig_Extensions_Node_Trans');
 	Twig_Autoloader::autoload('Twig_Extensions_TokenParser_Trans');
+	Twig_Autoloader::autoload('Twig_Extensions_Node_Rw');
+	Twig_Autoloader::autoload('Twig_Extensions_TokenParser_Rw');
 	Twig_Autoloader::autoload('Twig_Extensions_Extension_I18n');
 	Twig_Autoloader::autoload('Twig_Extensions_Extension_Tinyboard');
 	
